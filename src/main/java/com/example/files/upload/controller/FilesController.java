@@ -3,10 +3,15 @@ package com.example.files.upload.controller;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -23,12 +28,20 @@ import com.example.files.upload.service.FilesStorageService;
 
 @Controller
 @CrossOrigin()
+@Tag(name = "Upload e Download de arquivos")
 public class FilesController {
 
   @Autowired
   FilesStorageService storageService;
 
-  @PostMapping("/uploadFile")
+  @Operation(summary = "Upload de arquivo", method = "POST")
+//  @ApiResponses(value = {
+//          @ApiResponse(responseCode = "200", description = "Upload de arquivo realizado com sucesso"),
+//          @ApiResponse(responseCode = "422", description = "Dados de requisição inválida"),
+//          @ApiResponse(responseCode = "400", description = "Parametros inválidos"),
+//          @ApiResponse(responseCode = "500", description = "Erro ao realizar o upload de arquivo"),
+//  })
+  @PostMapping(value = "/uploadFile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<ResponseMessage> uploadFile(@RequestParam("file") MultipartFile file) {
     String message = "";
     try {
@@ -42,7 +55,8 @@ public class FilesController {
     }
   }
 
-  @GetMapping("/files")
+  @Operation(summary = "Lista todos os arquivos enviados", method = "GET")
+  @GetMapping(value = "/files")
   public ResponseEntity<List<FileInfo>> getListFiles() {
     List<FileInfo> fileInfos = storageService.loadAll().map(path -> {
       String filename = path.getFileName().toString();
@@ -55,7 +69,8 @@ public class FilesController {
     return ResponseEntity.status(HttpStatus.OK).body(fileInfos);
   }
 
-  @GetMapping("/files/{filename:.+}")
+  @Operation(summary = "Realiza o downlaod de arquivos", method = "GET")
+  @GetMapping(value = "/files/{filename:.+}")
   public ResponseEntity<Resource> getFile(@PathVariable String filename) {
     Resource file = storageService.load(filename);
     return ResponseEntity.ok()
